@@ -3,3 +3,5 @@ torch
 torchvision
 foolbox
 matplotlib
+pandas
+tqdm

@@ -1,8 +1,8 @@
 from time import time
-from IPython.display import clear_output
 
 import matplotlib.pyplot as plt
 import torch
+from tqdm import tqdm
 
 
 def plot_accuracy(epsilons, accuracies, avg_time, attack_name):
@@ -16,17 +16,13 @@ def plot_accuracy(epsilons, accuracies, avg_time, attack_name):
     plt.show()
 
 
-def calculate_avg_time(times):
-    return round(sum(times) / len(times), 4)
-
-
 def test_attack(model, attack, test_loader, epsilon, params=None):
     correct = 0
     total = 0
     start_time = time()
 
     for images, labels in test_loader:
-        if params:  # FW manual implementations
+        if params:  # FW manual implementations -- NOT USED
             _, pertrubed, _ = attack(model, images, labels, epsilon, params=params)
         else:  # foolbox implementations
             _, pertrubed, _ = attack(model, images, labels, epsilons=epsilon)
@@ -44,19 +40,17 @@ def test_attack(model, attack, test_loader, epsilon, params=None):
     return accuracy, end_time - start_time
 
 
-def attack_and_collect_stats(epsilons, model, attack, test_loader, attack_name, params=None):
+def attack_and_collect_stats(epsilons, model, attack, test_loader, attack_name, params=None, plot=True):
     accuracies = []
     times = []
 
-    for i, epsilon in enumerate(epsilons):
-        print("Progress:", i + 1, "/", len(epsilons))
+    for epsilon in tqdm(epsilons):
         accuracy, elapsed_time = test_attack(model, attack, test_loader, epsilon, params)
         accuracies.append(accuracy)
         times.append(elapsed_time)
 
-    clear_output(wait=False)
-
-    avg_time = calculate_avg_time(times)
-    plot_accuracy(epsilons, accuracies, avg_time, attack_name)
+    avg_time = round(sum(times) / len(times), 4)
+    if plot:
+        plot_accuracy(epsilons, accuracies, avg_time, attack_name)
 
     return accuracies, avg_time
